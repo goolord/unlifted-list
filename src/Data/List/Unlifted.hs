@@ -27,10 +27,13 @@ module Data.List.Unlifted
   , concat
   , concatMap
   , foldMap
+  , foldlM
+  , foldrM
   ) where
 
 import qualified Control.Applicative as A
 import qualified Data.Foldable as F
+import Control.Monad (Monad(..))
 import GHC.Prim
 import GHC.Types
 import GHC.Magic (oneShot)
@@ -246,4 +249,14 @@ foldMap :: Monoid m => (a -> m) -> UList a -> m
 foldMap f = foldr fun mempty
   where
   fun x = mappend (f x)
+
+foldlM :: Monad m => (b -> a -> m b) -> b -> UList a -> m b
+foldlM f z0 xs = foldr f' return xs z0
+  where f' x k z = f z x >>= k
+
+-- | Monadic fold over the elements of a structure,
+-- associating to the right, i.e. from right to left.
+foldrM :: Monad m => (a -> b -> m b) -> b -> UList a -> m b
+foldrM f z0 xs = foldl f' return xs z0
+  where f' k x z = f x z >>= k
 
